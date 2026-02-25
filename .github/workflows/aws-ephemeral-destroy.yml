@@ -1,0 +1,113 @@
+name: Ephemeral Infra Deletion
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Install Terragrunt
+        run: |
+          curl -L https://github.com/gruntwork-io/terragrunt/releases/latest/download/terragrunt_linux_amd64 -o terragrunt
+          chmod +x terragrunt
+          sudo mv terragrunt /usr/local/bin/
+
+      - name: Install jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: Destroy Expired Infra
+        run: |
+
+          BUCKET="ukesh-s3-bucket-12"
+          PREFIX="ephemeral/"
+          CURRENT_TIME=$(date +%s)
+          REPO_ROOT=$(pwd)
+
+          echo "Listing sandboxes..."
+
+          SANDBOXES=$(aws s3 ls s3://$BUCKET/$PREFIX --recursive | awk '{print $4}' | cut -d'/' -f2 | sort -u)
+
+          for sandbox in $SANDBOXES
+          do
+
+            if [ "$sandbox" = "default" ]; then
+              continue
+            fi
+
+            echo "Checking: $sandbox"
+
+            STATE_KEY="$PREFIX$sandbox/compute/terraform.tfstate"
+
+            if ! aws s3 cp s3://$BUCKET/$STATE_KEY state.json
+            then
+              echo "No state found"
+              continue
+            fi
+
+            CREATED=$(jq -r '.resources[].instances[].attributes.tags.created_at' state.json)
+            TTL=$(jq -r '.resources[].instances[].attributes.tags.ttl_days' state.json)
+            OWNER=$(jq -r '.resources[].instances[].attributes.tags.owner' state.json)
+
+            if [ "$CREATED" = "null" ] || [ "$TTL" = "null" ]
+            then
+              echo "Missing tags"
+              continue
+            fi
+
+            export CREATED_AT=$CREATED
+            export TTL_DAYS=$TTL
+            export OWNER=$OWNER
+
+            EXPIRY=$((CREATED + TTL * 86400))
+
+            if [ "$CURRENT_TIME" -gt "$EXPIRY" ]
+            then
+
+              echo "Destroying sandbox: $sandbox"
+
+              if [ ! -d "live/ephemeral/sandbox/requests/$sandbox" ]; then
+                echo "Request folder not found, skipping"
+                continue
+              fi
+
+              cd live/ephemeral/sandbox/requests/$sandbox
+              
+              echo "y" | terragrunt run --all init
+              
+              echo "y" | terragrunt run --all destroy -- -auto-approve
+
+              cd $REPO_ROOT
+
+              echo "Deleting state from S3..."
+              aws s3 rm s3://$BUCKET/$PREFIX$sandbox/ --recursive
+
+              echo "Deleting request folder from repo..."
+              rm -rf live/ephemeral/sandbox/requests/$sandbox
+
+            else
+
+              echo "Still valid"
+
+            fi
+
+          done

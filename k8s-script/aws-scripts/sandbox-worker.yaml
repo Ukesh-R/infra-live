@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sandbox-worker
+  namespace: sandbox
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: sandbox-worker
+
+  template:
+
+    metadata:
+      labels:
+        app: sandbox-worker
+
+    spec:
+
+      serviceAccountName: sandbox-sa
+
+      containers:
+      - name: worker
+        image: nginx
+        env:
+        - name: QUEUE_URL
+          value: https://sqs.ap-south-1.amazonaws.com/933774366414/sandbox-dev
+
+        - name: AWS_REGION
+          value: ap-south-1

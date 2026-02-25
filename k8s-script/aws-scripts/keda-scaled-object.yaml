@@ -1,0 +1,26 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+
+metadata:
+  name: sandbox-worker-scaler
+  namespace: sandbox
+
+spec:
+
+  scaleTargetRef:
+    name: sandbox-worker
+
+  minReplicaCount: 0
+  maxReplicaCount: 5
+  triggers:
+
+  - type: aws-sqs-queue
+
+    metadata:
+
+      queueURL: https://sqs.ap-south-1.amazonaws.com/933774366414/sandbox-dev
+      awsRegion: ap-south-1
+      queueLength: "1"
+
+    authenticationRef:
+      name: aws-trigger-auth

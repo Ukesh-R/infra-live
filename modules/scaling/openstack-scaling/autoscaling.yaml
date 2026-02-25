@@ -1,0 +1,54 @@
+heat_template_version: 2016-10-14
+description: CPU based AutoScaling
+
+parameters:
+
+  image:
+    type: string
+  flavor:
+    type: string
+  network:
+    type: string
+
+
+resources:
+
+  server_group:
+
+    type: OS::Heat::AutoScalingGroup
+
+    properties:
+
+      min_size: 1
+      max_size: 5
+      desired_capacity: 1
+      resource:
+        type: OS::Nova::Server
+        properties:
+          image: { get_param: image }
+          flavor: { get_param: flavor }
+          networks:
+            - network: { get_param: network }
+
+
+  scale_up_policy:
+
+    type: OS::Heat::ScalingPolicy
+    properties:
+      adjustment_type: change_in_capacity
+      auto_scaling_group_id: { get_resource: server_group }
+      scaling_adjustment: 1
+      cooldown: 60
+
+
+  scale_down_policy:
+
+    type: OS::Heat::ScalingPolicy
+
+    properties:
+      adjustment_type: change_in_capacity
+      auto_scaling_group_id: { get_resource: server_group }
+      scaling_adjustment: -1
+      cooldown: 60
+
+

@@ -1,0 +1,132 @@
+name: OpenStack Ephemeral Infra Deletion
+
+on:
+
+  schedule:
+    - cron: "0 */6 * * *"
+
+  workflow_dispatch:
+
+
+jobs:
+
+  cleanup:
+
+    runs-on: ubuntu-latest
+
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+
+      - name: Install Terragrunt
+        run: |
+          curl -L https://github.com/gruntwork-io/terragrunt/releases/latest/download/terragrunt_linux_amd64 -o terragrunt
+          chmod +x terragrunt
+          sudo mv terragrunt /usr/local/bin/
+
+
+      - name: Install jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+
+      - name: Destroy Expired OpenStack Infra
+
+        run: |
+
+          BUCKET="infra-dev-terraform-state-openstack"
+
+          PREFIX="openstack/openstack-sandbox/requests/"
+
+
+          CURRENT_TIME=$(date +%s)
+
+
+          echo "Listing sandboxes from S3..."
+
+
+          SANDBOXES=$(aws s3 ls s3://$BUCKET/$PREFIX | awk '{print $2}')
+
+
+          for sandbox in $SANDBOXES
+
+          do
+
+            sandbox=${sandbox%/}
+
+            echo "-------------------------------------"
+
+            echo "Checking sandbox: $sandbox"
+
+
+            STATE_KEY="$PREFIX$sandbox/compute/terraform.tfstate"
+
+
+            if ! aws s3 cp s3://$BUCKET/$STATE_KEY state.json
+            then
+
+              echo "No state found"
+
+              continue
+
+            fi
+
+
+            CREATED=$(jq -r '.resources[].instances[].attributes.tags.created_at' state.json)
+
+            TTL=$(jq -r '.resources[].instances[].attributes.tags.ttl_days' state.json)
+
+
+            if [ "$CREATED" = "null" ] || [ "$TTL" = "null" ]
+            then
+
+              echo "Missing TTL"
+
+              continue
+
+            fi
+
+
+            EXPIRY=$((CREATED + TTL * 86400))
+
+
+            if [ "$CURRENT_TIME" -gt "$EXPIRY" ]
+
+            then
+
+              echo "Destroying sandbox: $sandbox"
+
+
+              cd live/ephemeral/openstack-sandbox/requests/$sandbox
+
+
+              terragrunt run --all destroy -- -auto-approve
+
+
+              cd -
+
+
+            else
+
+              echo "Sandbox still valid"
+
+            fi
+
+
+          done

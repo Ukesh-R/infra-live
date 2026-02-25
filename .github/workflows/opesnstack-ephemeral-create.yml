@@ -1,0 +1,140 @@
+name: OpenStack Ephemeral Infra Creation
+
+on:
+
+  workflow_dispatch:
+
+    inputs:
+
+      request_id:
+        description: "Unique request ID"
+        required: true
+
+      ttl_days:
+        description: "TTL in days"
+        required: true
+
+      owner:
+        description: "Owner name"
+        required: true
+
+
+jobs:
+
+  deploy:
+
+    runs-on: ubuntu-latest
+
+
+    permissions:
+      contents: write
+
+
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v4
+
+
+    - name: Validate TTL
+      run: |
+        if ! [[ "${{ github.event.inputs.ttl_days }}" =~ ^[0-9]+$ ]]; then
+          echo "TTL must be number"
+          exit 1
+        fi
+
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+
+
+    - name: Install Terragrunt
+      run: |
+        curl -L https://github.com/gruntwork-io/terragrunt/releases/latest/download/terragrunt_linux_amd64 -o terragrunt
+        chmod +x terragrunt
+        sudo mv terragrunt /usr/local/bin/
+
+
+    - name: Create Request Directory
+
+      run: |
+
+        REQUEST_ID=${{ github.event.inputs.request_id }}
+        REQUEST_PATH="live/ephemeral/openstack-sandbox/requests/$REQUEST_ID"
+        if [ -d "$REQUEST_PATH" ]; then
+          echo "Request exists"
+          exit 1
+        fi
+
+        mkdir -p $REQUEST_PATH
+
+
+    - name: Copy Template
+
+      run: |
+
+        REQUEST_ID=${{ github.event.inputs.request_id }}
+
+        cp -r live/ephemeral/openstack-sandbox/template/* \
+              live/ephemeral/openstack-sandbox/requests/$REQUEST_ID/
+
+
+    - name: Generate Inputs
+
+      run: |
+
+        REQUEST_ID=${{ github.event.inputs.request_id }}
+        OWNER=${{ github.event.inputs.owner }}
+        TTL=${{ github.event.inputs.ttl_days }}
+        CREATED_AT=$(date +%s)
+        REQUEST_PATH="live/ephemeral/openstack-sandbox/requests/$REQUEST_ID"
+        cat <<EOF > $REQUEST_PATH/inputs.hcl
+
+        inputs = {
+
+          owner      = "$OWNER"
+          ttl_days   = $TTL
+          created_at = $CREATED_AT
+
+
+          tags = {
+
+            Name      = "openstack-$REQUEST_ID"
+            Owner     = "$OWNER"
+            TTL       = "$TTL"
+            CreatedAt = "$CREATED_AT"
+
+          }
+
+        }
+
+        EOF
+
+    - name: Run Terragrunt Apply
+
+      run: |
+
+        cd live/ephemeral/openstack-sandbox/requests/${{ github.event.inputs.request_id }}
+
+        terragrunt run --all apply -- -auto-approve
+
+
+
+    - name: Commit sandbox
+
+      run: |
+
+        git config --global user.name github-actions
+        git config --global user.email github-actions@github.com
+        REQUEST_ID=${{ github.event.inputs.request_id }}
+        git add live/ephemeral/openstack-sandbox/requests/$REQUEST_ID
+        git commit -m "Created OpenStack sandbox $REQUEST_ID" || echo "No changes"
+        git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:main

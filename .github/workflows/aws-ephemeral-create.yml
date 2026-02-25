@@ -1,0 +1,95 @@
+name: Ephemeral Infra Creation
+
+on:
+  workflow_dispatch:
+    inputs:
+      template:
+        description : "Select Template"
+        required : true
+        type : choice
+        options:
+          - dev
+          - staging
+          - prod
+      request_id:
+        description: "Unique request ID"
+        required: true
+      ttl_days:
+        description: "TTL in days"
+        required: true
+      owner:
+        description: "Owner name"
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    env:
+      REQUEST_ID: ${{ github.event.inputs.request_id }}
+      TTL_DAYS: ${{ github.event.inputs.ttl_days }}
+      OWNER: ${{ github.event.inputs.owner }}
+
+    permissions:
+      contents: write 
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate TTL
+        run: |
+          if ! [[ "${{ github.event.inputs.ttl_days }}" =~ ^[0-9]+$ ]]; then
+            echo "TTL must be a number"
+            exit 1
+          fi
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Install Terragrunt
+        run: |
+          curl -L https://github.com/gruntwork-io/terragrunt/releases/latest/download/terragrunt_linux_amd64 -o terragrunt
+          chmod +x terragrunt
+          sudo mv terragrunt /usr/local/bin/
+
+      - name: Create Request Directory from template
+        run: |
+
+          TEMPLATE=${{github.event.inputs.template}}
+          REQUEST_ID=${{github.event.inputs.request_id}} 
+
+          TEMPLATE_PATH="live/ephemeral/sandbox/template/$TEMPLATE"
+          REQUEST_PATH="live/ephemeral/sandbox/requests/$REQUEST_ID"
+
+          if [ -d "$REQUEST_PATH" ]; then
+            echo "Request ID already exists!"
+            exit 1
+          fi
+          cp -r $TEMPLATE_PATH $REQUEST_PATH
+          echo "Template copied successfully"
+          
+      - name: Set created_at timestamp
+        run: echo "CREATED_AT=$(date +%s)" >> $GITHUB_ENV
+
+      - name: Run Terragrunt Apply
+        run: |
+          cd live/ephemeral/sandbox/requests/${{ github.event.inputs.request_id }}
+          echo "y" | terragrunt run --all apply -- -auto-approve 
+
+      - name: Commit sandbox to repo
+        run: |
+
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          REQUEST_ID="${{ github.event.inputs.request_id }}"
+          git add live/ephemeral/sandbox/requests/$REQUEST_ID
+          git commit -m "Created sandbox $REQUEST_ID" || echo "No changes to commit"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:main
