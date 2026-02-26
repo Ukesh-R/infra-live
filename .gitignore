@@ -1,0 +1,20 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# Terragrunt
+.terragrunt-cache/
+
+# Provider binaries
+terraform-provider-*
+
+# Crash logs
+crash.log
+
+# AWS
+.aws/
+
+# OS
+.DS_Store

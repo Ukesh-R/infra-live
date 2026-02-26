@@ -87,8 +87,8 @@ jobs:
       - name: Commit sandbox to repo
         run: |
 
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
+          git config --global user.name "ukesh"
+          git config --global user.email "ukeshrv@gmail.com"
           REQUEST_ID="${{ github.event.inputs.request_id }}"
           git add live/ephemeral/sandbox/requests/$REQUEST_ID
           git commit -m "Created sandbox $REQUEST_ID" || echo "No changes to commit"
