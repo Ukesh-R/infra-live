@@ -91,7 +91,10 @@ jobs:
               fi
 
               cd live/ephemeral/sandbox/requests/$sandbox
-              
+              export TG_WORKSPACE=$sandbox
+
+              export TG_WORKSPACE=default
+
               echo "y" | terragrunt run --all destroy -- -auto-approve
 
               echo "Switching workspace to default"

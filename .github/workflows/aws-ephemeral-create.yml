@@ -82,10 +82,9 @@ jobs:
       - name: Run Terragrunt Apply
         run: |
           cd live/ephemeral/sandbox/requests/${{ github.event.inputs.request_id }}
-          echo "y" | terragrunt run --all apply -- -auto-approve 
-
           terragrunt run --all workspace new $REQUEST_ID || true
           terragrunt run --all workspace select $REQUEST_ID
+          echo "y" | terragrunt run --all apply -- -auto-approve 
 
       - name: Commit sandbox to repo
         run: |

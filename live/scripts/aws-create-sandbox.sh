@@ -1,7 +1,7 @@
 set -e
 
 if [ -z "$1" ] || [ -z "$2" ]; then
-  echo "Usage: ./aws-create-sandbox.sh <sandbox_name> <ttl_days>"
+  echo "Usage: ./aws-create-sandbox.sh <sandbox_name> <ttl_seconds>"
   exit 1
 fi
 
@@ -18,8 +18,7 @@ SANDBOX_DIR="$REQUESTS_DIR/$SANDBOX_NAME"
 
 echo "======================================"
 echo "Creating sandbox: $SANDBOX_NAME"
-echo "Using DEV template"
-echo "TTL: $TTL days"
+echo "TTL: $TTL SECONDS"
 echo "======================================"
 
 mkdir -p "$SANDBOX_DIR"
@@ -28,19 +27,19 @@ cp -r "$TEMPLATE_DIR/"* "$SANDBOX_DIR/"
 
 cat <<EOF > "$SANDBOX_DIR/inputs.hcl"
 inputs = {
-  owner      = "$SANDBOX_NAME"
-  ttl_days   = $TTL
-  created_at = "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+  owner       = "$SANDBOX_NAME"
+  ttl_seconds = $TTL
+  created_at  = "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
   tags = {
-    Owner     = "$SANDBOX_NAME"
-    TTL       = "$TTL"
+    Owner = "$SANDBOX_NAME"
+    TTL   = "$TTL"
   }
 }
 EOF
 
 export OWNER=$SANDBOX_NAME
-export TTL_DAYS=$TTL
+export TTL_SECONDS=$TTL
 export CREATED_AT=$(date +%s)
 
 
