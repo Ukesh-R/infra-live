@@ -46,7 +46,8 @@ export CREATED_AT=$(date +%s)
 cd "$SANDBOX_DIR"
 export TG_WORKSPACE=$SANDBOX_NAME
 echo "Creating workspace..."
-terragrunt run --all workspace select $SANDBOX_NAME -or-create
+terragrunt run --all workspace new $SANDBOX_NAME || true
+terragrunt run --all workspace select $SANDBOX_NAME
 echo "Initializing infrastructure..."
 terragrunt run --all init
 echo "Applying infrastructure..."

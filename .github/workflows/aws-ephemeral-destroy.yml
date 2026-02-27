@@ -2,7 +2,7 @@ name: Ephemeral Infra Deletion
 
 on:
   schedule:
-    - cron: "1 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 jobs:
@@ -91,11 +91,14 @@ jobs:
               fi
 
               cd live/ephemeral/sandbox/requests/$sandbox
-              export TG_WORKSPACE=$sandbox
 
-              export TG_WORKSPACE=default
+              echo "Selecting workspace"
 
-              echo "y" | terragrunt run --all destroy -- -auto-approve
+              terragrunt run --all workspace select $sandbox || terragrunt run --all workspace new $sandbox
+
+              echo "Destroying infra"
+
+              terragrunt run --all destroy -- -auto-approve
 
               echo "Switching workspace to default"
 
@@ -107,10 +110,12 @@ jobs:
 
               cd $REPO_ROOT
 
+              rm -f state.json
+
               echo "Deleting state from S3..."
               aws s3 rm s3://$BUCKET/$PREFIX$sandbox/ --recursive
 
-              echo "Deleting request folder from repo..."
+              echo "Deleting request folder..."
               rm -rf live/ephemeral/sandbox/requests/$sandbox
 
             else
