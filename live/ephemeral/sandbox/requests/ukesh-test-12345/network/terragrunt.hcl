@@ -37,7 +37,7 @@ inputs = {
   route_cidr         = "0.0.0.0/0"
   public_router_name = local.public_router_name
   tags               = local.tags
-  ttl_days   = get_env("TTL_SECONDS")
+  ttl_days   = get_env("TTL_DAYS")
   created_at = get_env("CREATED_AT")
   owner = get_env("OWNER")
 }

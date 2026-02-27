@@ -14,8 +14,8 @@ on:
       request_id:
         description: "Unique request ID"
         required: true
-      ttl_days:
-        description: "TTL in days"
+      ttl_seconds:
+        description: "TTL in seconds"
         required: true
       owner:
         description: "Owner name"
@@ -27,7 +27,7 @@ jobs:
     
     env:
       REQUEST_ID: ${{ github.event.inputs.request_id }}
-      TTL_DAYS: ${{ github.event.inputs.ttl_days }}
+      TTL_SECONDS: ${{ github.event.inputs.ttl_seconds }}
       OWNER: ${{ github.event.inputs.owner }}
 
     permissions:
@@ -39,7 +39,7 @@ jobs:
 
       - name: Validate TTL
         run: |
-          if ! [[ "${{ github.event.inputs.ttl_days }}" =~ ^[0-9]+$ ]]; then
+          if ! [[ "${{ github.event.inputs.ttl_seconds }}" =~ ^[0-9]+$ ]]; then
             echo "TTL must be a number"
             exit 1
           fi
@@ -83,6 +83,9 @@ jobs:
         run: |
           cd live/ephemeral/sandbox/requests/${{ github.event.inputs.request_id }}
           echo "y" | terragrunt run --all apply -- -auto-approve 
+
+          terragrunt run --all workspace new $REQUEST_ID || true
+          terragrunt run --all workspace select $REQUEST_ID
 
       - name: Commit sandbox to repo
         run: |

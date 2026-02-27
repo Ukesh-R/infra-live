@@ -6,7 +6,7 @@ resource "aws_vpc" "tf_vpc_network"{
   tags = {
     Name = var.network_name
     created_at = var.created_at
-    ttl_days   = var.ttl_days
+    ttl_seconds   = var.ttl_seconds
     owner      = var.owner
   }
 }

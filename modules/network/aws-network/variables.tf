@@ -26,7 +26,7 @@ variable "route_cidr" {
     type = string
 }
 
-variable "ttl_days" {
+variable "ttl_seconds" {
   type    = number
   default = null
 }

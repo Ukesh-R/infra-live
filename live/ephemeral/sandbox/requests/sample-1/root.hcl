@@ -16,7 +16,7 @@ remote_state {
 
     config = {
         bucket = "ukesh-s3-bucket-12"
-        key = key = "ephemeral/${get_env("TG_WORKSPACE", "default")}/${path_relative_to_include()}/terraform.tfstate"
+        key = "ephemeral/${terraform.workspace}/${path_relative_to_include()}/terraform.tfstate"
         region = local.region
         encrypt = true
         dynamodb_table = "ukesh-table" 

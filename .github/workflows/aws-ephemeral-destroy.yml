@@ -65,7 +65,7 @@ jobs:
             fi
 
             CREATED=$(jq -r '.resources[].instances[].attributes.tags.created_at' state.json)
-            TTL=$(jq -r '.resources[].instances[].attributes.tags.ttl_days' state.json)
+            TTL=$(jq -r '.resources[].instances[].attributes.tags.ttl_seconds' state.json)
             OWNER=$(jq -r '.resources[].instances[].attributes.tags.owner' state.json)
 
             if [ "$CREATED" = "null" ] || [ "$TTL" = "null" ]
@@ -75,10 +75,10 @@ jobs:
             fi
 
             export CREATED_AT=$CREATED
-            export TTL_DAYS=$TTL
+            export TTL_SECONDS=$TTL
             export OWNER=$OWNER
 
-            EXPIRY=$((CREATED + TTL * 86400))
+            EXPIRY=$((CREATED + TTL))
 
             if [ "$CURRENT_TIME" -gt "$EXPIRY" ]
             then
@@ -92,9 +92,15 @@ jobs:
 
               cd live/ephemeral/sandbox/requests/$sandbox
               
-              echo "y" | terragrunt run --all init
-              
               echo "y" | terragrunt run --all destroy -- -auto-approve
+
+              echo "Switching workspace to default"
+
+              terragrunt run --all workspace select default
+
+              echo "Deleting workspace"
+
+              terragrunt run --all workspace delete $sandbox
 
               cd $REPO_ROOT
 

@@ -47,7 +47,7 @@ inputs = {
     subnet_id = dependency.shared_network.outputs.subnet_ids[0]
     security_group_id = dependency.security.outputs.security_group_id
     keypair_name      = "ukesh-dev-key-1"
-    ttl_days   = get_env("TTL_SECONDS")
+    ttl_days   = get_env("TTL_DAYS")
     created_at = get_env("CREATED_AT")
     owner = get_env("OWNER")
 }

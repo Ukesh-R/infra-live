@@ -37,7 +37,7 @@ inputs =  {
     volume_size = 20
     instance_id = dependency.compute.outputs.instance_id
     ebs_name = local.ebs_name
-     ttl_days   = get_env("TTL_SECONDS")
+     ttl_days   = get_env("TTL_DAYS")
      created_at = get_env("CREATED_AT")
      owner = get_env("OWNER")
 }

@@ -23,7 +23,7 @@ resource "aws_security_group" "tf_sec_group" {
   tags = {
     name= var.security_group_name
     created_at = var.created_at
-    ttl_days   = var.ttl_days
+    ttl_seconds   = var.ttl_seconds
     owner      = var.owner
   }
 }

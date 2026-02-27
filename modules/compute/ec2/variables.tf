@@ -32,7 +32,7 @@ variable "owner" {
   default = null
 }
 
-variable "ttl_days" {
+variable "ttl_seconds" {
   type    = number
   default = null
 }

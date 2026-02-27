@@ -1,0 +1,42 @@
+name: Create Sandbox
+
+on:
+  workflow_dispatch:
+    inputs:
+      owner:
+        description: 'Owner name'
+        required: true
+      ttl_days:
+        description: 'TTL days'
+        required: true
+
+jobs:
+  create:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Configure AWS
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-south-1
+
+    - name: Install Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    - name: Install Terragrunt
+      run: |
+        wget https://github.com/gruntwork-io/terragrunt/releases/latest/download/terragrunt_linux_amd64
+        chmod +x terragrunt_linux_amd64
+        sudo mv terragrunt_linux_amd64 /usr/local/bin/terragrunt
+
+    - name: Run sandbox script
+      run: |
+        cd live/scripts
+        chmod +x aws-create-sandbox.sh
+        ./aws-create-sandbox.sh ${{ github.event.inputs.owner }} ${{ github.event.inputs.ttl_days }}

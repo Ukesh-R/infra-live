@@ -6,7 +6,7 @@ resource "aws_ebs_volume" "tf_data_volume" {
   tags = {
     name = var.ebs_name
     created_at = var.created_at
-    ttl_days   = var.ttl_days
+    ttl_seconds   = var.ttl_seconds
     owner      = var.owner
 
   }

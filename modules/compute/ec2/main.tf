@@ -11,7 +11,7 @@ resource "aws_instance" "tf_ec2" {
     var.tags,
     {
       created_at = tostring(var.created_at)
-      ttl_days   = tostring(var.ttl_days)
+      ttl_seconds   = tostring(var.ttl_seconds)
       owner      = var.owner
     }
   )

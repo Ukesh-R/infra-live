@@ -32,7 +32,7 @@ dependency "shared_network" {
 inputs = {
     security_group_name = "${local.name_prefix}-security-group"
     vpc_id = dependency.shared_network.outputs.vpc_id
-     ttl_days   = get_env("TTL_SECONDS")
+     ttl_days   = get_env("TTL_DAYS")
      created_at = get_env("CREATED_AT")
      owner = get_env("OWNER")
 }
