@@ -14,21 +14,19 @@ locals {
     security_group_name = "${local.name_prefix}-security-group-${local.region}"
 }
 
+dependencies {
+  paths = ["../network"]
+}
+
 dependency "shared_network" {
   config_path = "../network"
+  
   mock_outputs = {
     vpc_id     = "mock-vpc-id"
     subnet_ids = ["mock-subnet-id"]
   }
-  mock_outputs_allowed_terraform_commands = [
-    "init",
-    "plan",
-    "apply",
-    "destroy",
-    "refresh",
-    "workspace",
-    "validate"
-  ]
+
+  mock_outputs_allowed_terraform_commands = ["init", "destroy", "refresh"]
 }
 
 terraform {

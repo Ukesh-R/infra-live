@@ -62,11 +62,12 @@ CREATED_AT_ISO=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 aws dynamodb put-item \
   --table-name ukesh-table \
   --item "{
-    \"request_id\": {\"S\": \"${SANDBOX_NAME}\"},
+    \"LockID\": {\"S\": \"${SANDBOX_NAME}\"},
     \"owner\": {\"S\": \"${SANDBOX_NAME}\"},
     \"created_at\": {\"S\": \"${CREATED_AT_ISO}\"},
     \"ttl_seconds\": {\"N\": \"${TTL}\"},
-    \"path\": {\"S\": \"/infra-live/ephemeral/sandbox/requests/${SANDBOX_NAME}\"},
+    \"expires_at\": {\"N\": \"${EXPIRES_AT}\"},
+    \"path\": {\"S\": \"live/ephemeral/sandbox/requests/${SANDBOX_NAME}\"},
     \"status\": {\"S\": \"active\"}
   }"
 

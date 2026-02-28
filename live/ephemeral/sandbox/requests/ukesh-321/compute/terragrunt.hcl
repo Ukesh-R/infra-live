@@ -17,6 +17,17 @@ terraform {
     source = "${get_repo_root()}/modules/compute/ec2"
 }
 
+dependency "shared_network" {
+  config_path = "../network"
+  
+  mock_outputs = {
+    vpc_id     = "mock-vpc-id"
+    subnet_ids = ["mock-subnet-id"]
+  }
+
+  mock_outputs_allowed_terraform_commands = ["init", "destroy", "refresh"]
+}
+
 dependencies {
   paths = ["../network", "../security"]
 }
@@ -24,36 +35,19 @@ dependencies {
 dependency "security" {
 
   config_path = "../security"
+
   mock_outputs = {
-    security_group_id = "mock-security-group-id"
+    security_group_id = "mock-sg"
   }
 
   mock_outputs_allowed_terraform_commands = [
     "init",
+    "validate",
     "plan",
-    "apply",
     "destroy",
-    "refresh",
-    "workspace",
-    "validate"
+    "workspace"
   ]
-}
 
-dependency "shared_network" {
-  config_path = "../network"
-  mock_outputs = {
-    vpc_id     = "mock-vpc-id"
-    subnet_ids = ["mock-subnet-id"]
-  }
-  mock_outputs_allowed_terraform_commands = [
-    "init",
-    "plan",
-    "apply",
-    "destroy",
-    "refresh",
-    "workspace",
-    "validate"
-  ]
 }
 
 inputs = {

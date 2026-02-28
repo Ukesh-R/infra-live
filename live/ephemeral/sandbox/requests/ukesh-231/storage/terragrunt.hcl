@@ -24,20 +24,18 @@ dependencies {
 dependency "compute" {
 
   config_path = "../compute"
+
   mock_outputs = {
-
-    instance_id = "mock-instance-id"
-    availability_zone = "ap-south-1a"
-
+    shared_network_output = "mock-shared_network-output"
   }
 
   mock_outputs_allowed_terraform_commands = [
     "init",
     "validate",
     "plan",
-    "destroy",
     "workspace"
   ]
+
 }
 
 inputs =  {
