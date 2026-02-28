@@ -16,6 +16,7 @@ locals {
 
 dependency "shared_network" {
   config_path = "../network"
+ 
   mock_outputs = 
   {
      shared_network_output = "mock-shared_network-output"

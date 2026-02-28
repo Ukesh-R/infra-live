@@ -30,12 +30,15 @@ dependency "shared_network" {
 
 dependency "security" {
  config_path = "../security"
- mock_outputs = 
- {
-    shared_network_output = "mock-shared_network-output"
+ mock_outputs = {
+   security_group_id = "mock-sg-id"
  }
 
- 
+ mock_outputs_allowed_terraform_commands = [
+   "destroy",
+   "init",
+   "refresh"
+ ]
 }
 
 inputs = {

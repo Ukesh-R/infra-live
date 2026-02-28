@@ -16,10 +16,14 @@ locals {
 
 dependency "shared_network" {
   config_path = "../network"
-  mock_outputs = 
-  {
-     shared_network_output = "mock-shared_network-output"
+  skip_outputs = false
+ 
+  mock_outputs = {
+    vpc_id     = "mock-vpc-id"
+    subnet_ids = ["mock-subnet-id"]
   }
+
+  mock_outputs_allowed_terraform_commands = ["init", "destroy", "refresh"]
 }
 
 terraform {

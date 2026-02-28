@@ -20,10 +20,16 @@ terraform {
 dependency "compute" {
  config_path = "../compute"
  
- mock_outputs = 
- {
-    shared_network_output = "mock-shared_network-output"
+
+ mock_outputs = {
+   instance_id = "mock-instance-id"
  }
+
+ mock_outputs_allowed_terraform_commands = [
+   "destroy",
+   "init",
+   "refresh"
+ ]
 }
 
 inputs =  {
