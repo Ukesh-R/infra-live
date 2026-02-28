@@ -17,13 +17,25 @@ terraform {
     source = "${get_repo_root()}/modules/storage/ebs"
 }
 
+dependencies {
+  paths = ["../compute"]
+}
+
 dependency "compute" {
- config_path = "../compute"
- 
- mock_outputs = 
- {
+
+  config_path = "../compute"
+
+  mock_outputs = {
     shared_network_output = "mock-shared_network-output"
- }
+  }
+
+  mock_outputs_allowed_terraform_commands = [
+    "init",
+    "validate",
+    "plan",
+    "workspace"
+  ]
+
 }
 
 inputs =  {

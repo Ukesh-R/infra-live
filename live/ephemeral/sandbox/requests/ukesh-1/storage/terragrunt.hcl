@@ -17,10 +17,6 @@ terraform {
     source = "${get_repo_root()}/modules/storage/ebs"
 }
 
-dependencies {
-  paths = ["../compute"]
-}
-
 dependency "compute" {
 
   config_path = "../compute"

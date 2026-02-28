@@ -47,7 +47,7 @@ cd "$SANDBOX_DIR"
 
 echo "Initializing infrastructure..."
 
-terragrunt run --all init
+# terragrunt run --all init
 
 echo "Creating/selecting workspace..."
 

@@ -14,10 +14,6 @@ locals {
     security_group_name = "${local.name_prefix}-security-group-${local.region}"
 }
 
-dependencies {
-  paths = ["../network"]
-}
-
 dependency "shared_network" {
   config_path = "../network"
   

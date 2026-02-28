@@ -28,26 +28,12 @@ dependency "shared_network" {
   mock_outputs_allowed_terraform_commands = ["init", "destroy", "refresh"]
 }
 
-dependencies {
-  paths = ["../network", "../security"]
-}
-
 dependency "security" {
-
-  config_path = "../security"
-
-  mock_outputs = {
-    security_group_id = "mock-sg"
-  }
-
-  mock_outputs_allowed_terraform_commands = [
-    "init",
-    "validate",
-    "plan",
-    "destroy",
-    "workspace"
-  ]
-
+ config_path = "../security"
+ mock_outputs = 
+ {
+    shared_network_output = "mock-shared_network-output"
+ }
 }
 
 inputs = {
