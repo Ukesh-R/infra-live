@@ -64,8 +64,7 @@ aws dynamodb put-item \
   --item "{
     \"LockID\": {\"S\": \"${SANDBOX_NAME}\"},
     \"owner\": {\"S\": \"${SANDBOX_NAME}\"},
-    \"created_at\": {\"S\": \"${CREATED_AT_ISO}\"},
-    \"ttl_seconds\": {\"N\": \"${TTL}\"},
+    \"created_at\": {\"N\": \"${CURRENT_TIME}\"},
     \"expires_at\": {\"N\": \"${EXPIRES_AT}\"},
     \"path\": {\"S\": \"live/ephemeral/sandbox/requests/${SANDBOX_NAME}\"},
     \"status\": {\"S\": \"active\"}
