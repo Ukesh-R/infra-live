@@ -1,11 +1,10 @@
-#!/bin/bash
 set -e
 
 TABLE="ukesh-table"
 NOW=$(date +%s)
 
 echo "======================================"
-echo "Starting TTL Cleanup at $NOW"
+echo "Starting TTL Cleanup at $SANDBOX_NAME"
 echo "======================================"
 
 aws dynamodb scan \
@@ -17,6 +16,13 @@ aws dynamodb scan \
   EXPIRES=$(echo "$item" | jq -r '.expires_at.N')
   PATH_DIR=$(echo "$item" | jq -r '.path.S')
   STATUS=$(echo "$item" | jq -r '.status.S')
+  CREATED_AT=$(echo "$item" | jq -r '.created_at.N')
+
+  TTL_SECONDS=$((EXPIRES - CREATED_AT))
+
+  export OWNER=$SANDBOX_NAME
+  export CREATED_AT=$CREATED_AT
+  export TTL_SECONDS=$TTL_SECONDS
 
   echo "Checking sandbox: $SANDBOX_NAME | STATUS=$STATUS | EXPIRES=$EXPIRES"
 
