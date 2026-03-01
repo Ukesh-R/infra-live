@@ -52,7 +52,7 @@ aws dynamodb scan \
 
     echo "Reinitializing..."
 
-    terragrunt run --all init -reconfigure
+    terragrunt run --all init 
 
     echo "Deleting sandbox workspace..."
 
