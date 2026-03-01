@@ -32,7 +32,7 @@ aws dynamodb scan \
     continue
   fi
 
-  if [ "$STATUS" = "active" ] && [ "$NOW" -gt "$EXPIRES" ]; then
+  if [ "$NOW" -gt "$EXPIRES" ]; then
 
     echo "TTL expired → cleaning sandbox: $SANDBOX_NAME"
 
