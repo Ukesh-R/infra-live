@@ -46,7 +46,7 @@ aws dynamodb scan \
 
     echo "Switching to default workspace..."
 
-    export TF_WORKSPACE=default
+    unset TF_WORKSPACE
 
     terragrunt run --all -- workspace select default
 
