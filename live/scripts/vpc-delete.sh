@@ -2,103 +2,51 @@
 
 REGION="ap-south-1"
 
-for VPC in $(aws ec2 describe-vpcs \
---region $REGION \
---query 'Vpcs[?IsDefault==`false`].VpcId' \
---output text)
-do
-
-echo "============================="
-echo "Deleting VPC: $VPC"
-echo "============================="
-
-# Terminate EC2 instances
-for EC2 in $(aws ec2 describe-instances \
---region $REGION \
---filters Name=vpc-id,Values=$VPC \
---query 'Reservations[].Instances[].InstanceId' \
---output text)
-do
-aws ec2 terminate-instances --instance-ids $EC2 --region $REGION
-done
+echo "Deleting EC2 instances..."
+aws ec2 describe-instances \
+  --region $REGION \
+  --query "Reservations[].Instances[].InstanceId" \
+  --output text | \
+xargs -r aws ec2 terminate-instances --region $REGION --instance-ids
 
 sleep 10
 
-# Delete NAT gateways
-for NAT in $(aws ec2 describe-nat-gateways \
---region $REGION \
---filter Name=vpc-id,Values=$VPC \
---query 'NatGateways[].NatGatewayId' \
---output text)
+echo "Deleting EBS volumes..."
+aws ec2 describe-volumes \
+  --region $REGION \
+  --query "Volumes[].VolumeId" \
+  --output text | \
+xargs -r -I {} aws ec2 delete-volume --region $REGION --volume-id {}
+
+echo "Deleting Security Groups..."
+aws ec2 describe-security-groups \
+  --region $REGION \
+  --query "SecurityGroups[?GroupName!='default'].GroupId" \
+  --output text | \
+xargs -r -I {} aws ec2 delete-security-group --region $REGION --group-id {}
+
+echo "Deleting Internet Gateways..."
+for igw in $(aws ec2 describe-internet-gateways --region $REGION --query "InternetGateways[].InternetGatewayId" --output text)
 do
-aws ec2 delete-nat-gateway --nat-gateway-id $NAT --region $REGION
+  vpc=$(aws ec2 describe-internet-gateways --region $REGION --internet-gateway-ids $igw --query "InternetGateways[].Attachments[].VpcId" --output text)
+
+  aws ec2 detach-internet-gateway --region $REGION --internet-gateway-id $igw --vpc-id $vpc
+
+  aws ec2 delete-internet-gateway --region $REGION --internet-gateway-id $igw
 done
 
-sleep 10
+echo "Deleting Subnets..."
+aws ec2 describe-subnets \
+  --region $REGION \
+  --query "Subnets[].SubnetId" \
+  --output text | \
+xargs -r -I {} aws ec2 delete-subnet --region $REGION --subnet-id {}
 
-# Release Elastic IPs
-for EIP in $(aws ec2 describe-addresses \
---region $REGION \
---query 'Addresses[].AllocationId' \
---output text)
-do
-aws ec2 release-address --allocation-id $EIP --region $REGION
-done
+echo "Deleting VPCs..."
+aws ec2 describe-vpcs \
+  --region $REGION \
+  --query "Vpcs[?IsDefault==\`false\`].VpcId" \
+  --output text | \
+xargs -r -I {} aws ec2 delete-vpc --region $REGION --vpc-id {}
 
-# Delete Network Interfaces
-for ENI in $(aws ec2 describe-network-interfaces \
---region $REGION \
---filters Name=vpc-id,Values=$VPC \
---query 'NetworkInterfaces[].NetworkInterfaceId' \
---output text)
-do
-aws ec2 delete-network-interface --network-interface-id $ENI --region $REGION
-done
-
-# Detach and delete Internet Gateway
-for IGW in $(aws ec2 describe-internet-gateways \
---region $REGION \
---filters Name=attachment.vpc-id,Values=$VPC \
---query 'InternetGateways[].InternetGatewayId' \
---output text)
-do
-aws ec2 detach-internet-gateway --internet-gateway-id $IGW --vpc-id $VPC --region $REGION
-aws ec2 delete-internet-gateway --internet-gateway-id $IGW --region $REGION
-done
-
-# Delete subnets
-for SUBNET in $(aws ec2 describe-subnets \
---region $REGION \
---filters Name=vpc-id,Values=$VPC \
---query 'Subnets[].SubnetId' \
---output text)
-do
-aws ec2 delete-subnet --subnet-id $SUBNET --region $REGION
-done
-
-# Delete route tables
-for RT in $(aws ec2 describe-route-tables \
---region $REGION \
---filters Name=vpc-id,Values=$VPC \
---query 'RouteTables[].RouteTableId' \
---output text)
-do
-aws ec2 delete-route-table --route-table-id $RT --region $REGION
-done
-
-# Delete security groups
-for SG in $(aws ec2 describe-security-groups \
---region $REGION \
---filters Name=vpc-id,Values=$VPC \
---query 'SecurityGroups[].GroupId' \
---output text)
-do
-aws ec2 delete-security-group --group-id $SG --region $REGION
-done
-
-# Delete VPC
-aws ec2 delete-vpc --vpc-id $VPC --region $REGION
-
-echo "VPC Deleted: $VPC"
-
-done
+echo "Cleanup completed!"
