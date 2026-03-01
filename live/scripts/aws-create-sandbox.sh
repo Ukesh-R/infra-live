@@ -24,6 +24,7 @@ mkdir -p "$SANDBOX_DIR"
 cp -r "$TEMPLATE_DIR/"* "$SANDBOX_DIR/"
 
 CURRENT_TIME=$(date +%s)
+EXPIRES_AT=$((CURRENT_TIME + TTL))
 
 cat <<EOF > "$SANDBOX_DIR/inputs.hcl"
 inputs = {

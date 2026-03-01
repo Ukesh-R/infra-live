@@ -1,42 +1,69 @@
 #!/bin/bash
+set -e
 
 TABLE="ukesh-table"
 NOW=$(date +%s)
 
+echo "======================================"
+echo "Starting TTL Cleanup at $NOW"
+echo "======================================"
+
 aws dynamodb scan \
-  --table-name $TABLE \
-  --output json | jq -c '.Items[]' | while read item; do
+  --table-name "$TABLE" \
+  --output json | jq -c '.Items[]' | while read -r item; do
 
-OWNER=$(echo $item | jq -r '.owner.S')
-EXPIRES=$(echo $item | jq -r '.expires_at.N')
-PATH_DIR=$(echo $item | jq -r '.path.S')
-STATUS=$(echo $item | jq -r '.status.S')
+  # Extract values from DynamoDB
+  SANDBOX_NAME=$(echo "$item" | jq -r '.LockID.S')
+  EXPIRES=$(echo "$item" | jq -r '.expires_at.N')
+  PATH_DIR=$(echo "$item" | jq -r '.path.S')
+  STATUS=$(echo "$item" | jq -r '.status.S')
 
-if [ "$STATUS" = "active" ] && [ "$NOW" -gt "$EXPIRES" ]; then
+  echo "Checking sandbox: $SANDBOX_NAME | STATUS=$STATUS | EXPIRES=$EXPIRES"
 
-echo "TTL expired → destroying $OWNER"
+  # Skip invalid entries
+  if [ "$SANDBOX_NAME" = "null" ] || [ "$EXPIRES" = "null" ]; then
+    echo "Skipping invalid record..."
+    continue
+  fi
 
-cd ~/terraform-projects/$PATH_DIR
+  # Check TTL expiry
+  if [ "$STATUS" = "active" ] && [ "$NOW" -gt "$EXPIRES" ]; then
 
-export OWNER=$OWNER
-export TTL_SECONDS=0
-export CREATED_AT=0
+    echo "TTL expired → cleaning sandbox: $SANDBOX_NAME"
 
-terragrunt run --all destroy -- -auto-approve
+    cd ~/terraform-projects/$PATH_DIR
 
-terragrunt run --all -- workspace select default
+    echo "Selecting workspace..."
+    terragrunt run --all -- workspace select "$SANDBOX_NAME"
 
-terragrunt run --all -- workspace delete $OWNER
+    echo "Destroying infrastructure..."
+    terragrunt run --all destroy -- -auto-approve
 
-aws dynamodb update-item \
-  --table-name $TABLE \
-  --key "{\"LockID\":{\"S\":\"$OWNER\"}}" \
-  --update-expression "SET #s = :deleted" \
-  --expression-attribute-names '{"#s":"status"}' \
-  --expression-attribute-values '{":deleted":{"S":"deleted"}}'
+    echo "Switching to default workspace..."
+    terragrunt run --all -- workspace select default
 
-echo "$OWNER deleted successfully"
+    echo "Deleting sandbox workspace..."
+    terragrunt run --all -- workspace delete "$SANDBOX_NAME"
 
-fi
+    echo "Updating DynamoDB status..."
+
+    aws dynamodb update-item \
+      --table-name "$TABLE" \
+      --key "{\"LockID\":{\"S\":\"$SANDBOX_NAME\"}}" \
+      --update-expression "SET #s = :deleted" \
+      --expression-attribute-names '{"#s":"status"}' \
+      --expression-attribute-values '{":deleted":{"S":"deleted"}}'
+
+    echo "✅ Sandbox $SANDBOX_NAME cleaned successfully"
+
+  else
+
+    echo "Sandbox $SANDBOX_NAME not expired or already deleted"
+
+  fi
 
 done
+
+echo "======================================"
+echo "Cleanup Finished"
+echo "======================================"
