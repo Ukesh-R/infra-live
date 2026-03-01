@@ -58,6 +58,12 @@ aws dynamodb scan \
 
     terragrunt run --all -- workspace delete -force "$SANDBOX_NAME"
 
+    echo "Deleting lock entry..."
+
+    aws dynamodb delete-item \
+      --table-name "$TABLE" \
+      --key "{\"LockID\":{\"S\":\"$LOCK_ID\"}}" 
+
     echo "Updating DynamoDB status..."
 
     aws dynamodb update-item \
