@@ -86,12 +86,26 @@ jobs:
           terragrunt run --all workspace select $REQUEST_ID
           echo "y" | terragrunt run --all apply -- -auto-approve 
 
-      - name: Commit sandbox to repo
+      - name: Store sandbox metadata in DynamoDB
         run: |
 
-          git config --global user.name "ukesh"
-          git config --global user.email "ukeshrv@gmail.com"
+          TABLE="ukesh-table"
+
           REQUEST_ID="${{ github.event.inputs.request_id }}"
-          git add live/ephemeral/sandbox/requests/$REQUEST_ID
-          git commit -m "Created sandbox $REQUEST_ID" || echo "No changes to commit"
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:main
+          OWNER="${{ github.event.inputs.owner }}"
+          TTL_SECONDS="${{ github.event.inputs.ttl_seconds }}"
+          CREATED_AT="${{ env.CREATED_AT }}"
+          EXPIRES_AT=$((CREATED_AT + TTL_SECONDS))
+
+          PATH="live/ephemeral/sandbox/requests/$REQUEST_ID"
+
+          aws dynamodb put-item \
+            --table-name $TABLE \
+            --item "{
+              \"LockID\": {\"S\": \"$REQUEST_ID\"},
+              \"owner\": {\"S\": \"$OWNER\"},
+              \"status\": {\"S\": \"active\"},
+              \"created_at\": {\"N\": \"$CREATED_AT\"},
+              \"expires_at\": {\"N\": \"$EXPIRES_AT\"},
+              \"path\": {\"S\": \"$PATH\"}
+            }"

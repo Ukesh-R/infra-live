@@ -4,14 +4,15 @@ TABLE="ukesh-table"
 NOW=$(date +%s)
 
 echo "======================================"
-echo "Starting TTL Cleanup at $SANDBOX_NAME"
+echo "Starting TTL Cleanup at $NOW"
 echo "======================================"
+
+ORIGINAL_DIR=$(pwd)
 
 aws dynamodb scan \
   --table-name "$TABLE" \
   --output json | jq -c '.Items[]' | while read -r item; do
 
-  # Extract values from DynamoDB
   SANDBOX_NAME=$(echo "$item" | jq -r '.LockID.S')
   EXPIRES=$(echo "$item" | jq -r '.expires_at.N')
   PATH_DIR=$(echo "$item" | jq -r '.path.S')
@@ -26,13 +27,11 @@ aws dynamodb scan \
 
   echo "Checking sandbox: $SANDBOX_NAME | STATUS=$STATUS | EXPIRES=$EXPIRES"
 
-  # Skip invalid entries
   if [ "$SANDBOX_NAME" = "null" ] || [ "$EXPIRES" = "null" ]; then
     echo "Skipping invalid record..."
     continue
   fi
 
-  # Check TTL expiry
   if [ "$STATUS" = "active" ] && [ "$NOW" -gt "$EXPIRES" ]; then
 
     echo "TTL expired → cleaning sandbox: $SANDBOX_NAME"
@@ -46,10 +45,18 @@ aws dynamodb scan \
     terragrunt run --all destroy -- -auto-approve
 
     echo "Switching to default workspace..."
+
+    export TF_WORKSPACE=default
+
     terragrunt run --all -- workspace select default
 
+    echo "Reinitializing..."
+
+    terragrunt run --all init -reconfigure
+
     echo "Deleting sandbox workspace..."
-    terragrunt run --all -- workspace delete "$SANDBOX_NAME"
+
+    terragrunt run --all -- workspace delete -force "$SANDBOX_NAME"
 
     echo "Updating DynamoDB status..."
 
@@ -61,6 +68,8 @@ aws dynamodb scan \
       --expression-attribute-values '{":deleted":{"S":"deleted"}}'
 
     echo "✅ Sandbox $SANDBOX_NAME cleaned successfully"
+
+    cd "$ORIGINAL_DIR"
 
   else
 
