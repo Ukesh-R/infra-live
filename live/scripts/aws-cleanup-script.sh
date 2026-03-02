@@ -1,6 +1,8 @@
 set -e
 
 TABLE="ukesh-table"
+BUCKET="ukesh-s3-bucket-12"
+
 NOW=$(date +%s)
 
 echo "======================================"
@@ -16,7 +18,6 @@ aws dynamodb scan \
   SANDBOX_NAME=$(echo "$item" | jq -r '.LockID.S')
   EXPIRES=$(echo "$item" | jq -r '.expires_at.N')
   PATH_DIR=$(echo "$item" | jq -r '.path.S')
-  STATUS=$(echo "$item" | jq -r '.status.S')
   CREATED_AT=$(echo "$item" | jq -r '.created_at.N')
 
   TTL_SECONDS=$((EXPIRES - CREATED_AT))
@@ -25,61 +26,45 @@ aws dynamodb scan \
   export CREATED_AT=$CREATED_AT
   export TTL_SECONDS=$TTL_SECONDS
 
-  echo "Checking sandbox: $SANDBOX_NAME | STATUS=$STATUS | EXPIRES=$EXPIRES"
-
-  if [ "$SANDBOX_NAME" = "null" ] || [ "$EXPIRES" = "null" ]; then
-    echo "Skipping invalid record..."
-    continue
-  fi
+  echo "Checking sandbox: $SANDBOX_NAME | EXPIRES=$EXPIRES"
 
   if [ "$NOW" -gt "$EXPIRES" ]; then
 
-    echo "TTL expired → cleaning sandbox: $SANDBOX_NAME"
+    echo "Cleaning sandbox: $SANDBOX_NAME"
 
     cd ~/terraform-projects/$PATH_DIR
 
     echo "Selecting workspace..."
-    terragrunt run --all -- workspace select "$SANDBOX_NAME"
+    terragrunt run --all workspace select "$SANDBOX_NAME"
 
     echo "Destroying infrastructure..."
-    terragrunt run --all destroy -- -auto-approve
+    terragrunt run --all destroy \
+      --non-interactive \
+      -- -auto-approve
 
     echo "Switching to default workspace..."
+    terragrunt run --all workspace select default
 
-    unset TF_WORKSPACE
+    echo "Deleting workspace..."
+    terragrunt run --all workspace delete \
+      --non-interactive \
+      -- -force "$SANDBOX_NAME"
 
-    terragrunt run --all -- workspace select default
 
-    echo "Reinitializing..."
+    echo "Deleting S3 state..."
+    aws s3 rm s3://$BUCKET/env:/$SANDBOX_NAME --recursive
 
-    terragrunt run --all init 
-
-    echo "Deleting sandbox workspace..."
-
-    terragrunt run --all -- workspace delete -force "$SANDBOX_NAME"
-
-    echo "Deleting lock entry..."
-
+    echo "Deleting DynamoDB record..."
     aws dynamodb delete-item \
       --table-name "$TABLE" \
-      --key "{\"LockID\":{\"S\":\"$LOCK_ID\"}}" 
+      --key "{\"LockID\":{\"S\":\"$SANDBOX_NAME\"}}"
 
-    echo "Updating DynamoDB status..."
-
-    aws dynamodb update-item \
-      --table-name "$TABLE" \
-      --key "{\"LockID\":{\"S\":\"$SANDBOX_NAME\"}}" \
-      --update-expression "SET #s = :deleted" \
-      --expression-attribute-names '{"#s":"status"}' \
-      --expression-attribute-values '{":deleted":{"S":"deleted"}}'
-
-    echo "✅ Sandbox $SANDBOX_NAME cleaned successfully"
+    echo "Deleting local folder..."
+    rm -rf ~/terraform-projects/$PATH_DIR
 
     cd "$ORIGINAL_DIR"
 
-  else
-
-    echo "Sandbox $SANDBOX_NAME not expired or already deleted"
+    echo "Sandbox deleted: $SANDBOX_NAME"
 
   fi
 
