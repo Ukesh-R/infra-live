@@ -43,12 +43,3 @@ module "iam" {
   environment  = var.environment
 }
 
-module "autoscaling" {
-
- source = "../../../modules/scaling/openstack-scaling"
- env = "dev"
- image = var.image_name
- flavor = var.vm_size
- network = module.network.network_id
-
-}
