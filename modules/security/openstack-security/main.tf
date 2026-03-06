@@ -28,6 +28,14 @@ locals {
     {
       protocol = "icmp"
       port     = null
+    },
+    {
+      protocol = "udp"
+      port     = 500
+    },
+    {
+      protocol = "udp"
+      port     = 4500
     }
   ]
 }
@@ -46,4 +54,14 @@ resource "openstack_networking_secgroup_rule_v2" "ingress" {
 
   port_range_min = each.value.port
   port_range_max = each.value.port
+}
+
+resource "openstack_networking_secgroup_rule_v2" "vpn_esp" {
+
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "esp"
+  security_group_id = openstack_networking_secgroup_v2.tf_sec_group_1.id
+  remote_ip_prefix  = "0.0.0.0/0"
+
 }

@@ -15,13 +15,17 @@ resource "openstack_compute_instance_v2" "vm"{
 
     
     network {
-      port = var.port_id
-    }    
+    uuid = var.network_id
+  }  
+}
+
+resource "openstack_networking_floatingip_v2" "vm_fip" {
+  pool = "public1"
 }
 
 resource "openstack_networking_floatingip_associate_v2" "fip_assoc" {
-  floating_ip = var.floating_ip
-  port_id       = var.port_id
+  floating_ip = openstack_networking_floatingip_v2.vm_fip.address
+  port_id     = openstack_compute_instance_v2.vm.network[0].port
 }
 
 

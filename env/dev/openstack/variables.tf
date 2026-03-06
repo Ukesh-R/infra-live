@@ -37,3 +37,8 @@ variable "environment" {
   type = string
 }
 
+# VPN
+
+variable "vpn_vm_name"{
+  type = string
+}

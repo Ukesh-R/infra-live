@@ -6,8 +6,14 @@ volume_size  = "20"
 keypair_name = "ukesh-key-dev"
 
 # network
-subnet_cidr  = "10.0.1.0/24"
+subnet_cidr  = "10.0.0.0/24"
+
+# VPN
+
+vpn_vm_name = "vpn_gateway_vm"
+
 
 #project
 project_name = "infra-project"
 environment  = "dev"
+

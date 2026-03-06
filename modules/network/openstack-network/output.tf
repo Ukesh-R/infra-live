@@ -3,7 +3,7 @@ output "network_id" {
 }
 
 output "subnet_id" {
-    value = "openstack_networking_network_v2.subnet_1.id"
+    value = openstack_networking_subnet_v2.subnet_1.id
 }
 
 output "floating_ip_address" {

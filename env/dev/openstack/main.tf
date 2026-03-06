@@ -43,3 +43,14 @@ module "iam" {
   environment  = var.environment
 }
 
+module "vpn" {
+  source = "../../../modules/vpn/openstack-vpn"
+  vpn_vm_name         = var.vpn_vm_name
+  image_name          = var.image_name
+  vm_size             = var.vm_size
+  keypair_name        = var.keypair_name
+  floating_ip= module.network.floating_ip_address
+  security_group_id = module.security.security_group_id
+  network_id = module.network.network_id
+  subnet_id = module.network.subnet_id
+}
