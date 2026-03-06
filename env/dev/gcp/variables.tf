@@ -19,18 +19,8 @@ variable "region_name"{
     type = string
 }
 
-variable "external_ip_name"{
+variable "external_ip_name" {
     type = string
-}
-
-# security
-
-variable "security_name" {
-    type = string
-}
-
-variable "source_ranges" {
-  type = list(string)
 }
 
 # Compute
@@ -50,3 +40,27 @@ variable "vm_type"{
 variable "image_name"{
     type = string
 }
+
+
+# security
+
+variable "security_name" {
+    type = string
+}
+
+variable "source_ranges" {
+  type = list(string)
+}
+
+
+
+# VPN
+
+variable "vpn_gateway_name" {
+  type = string
+}
+
+variable "openstack_subnet" {
+  type = string
+}
+

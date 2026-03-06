@@ -19,3 +19,8 @@ vm_name = "vm-1"
 vm_type = "e2-micro"
 image_name = "debian-cloud/debian-11"
 zone = "asia-south1-a"
+
+# VPN
+
+vpn_gateway_name = "gcp-vpn-gateway"
+openstack_subnet = "10.0.0.0/16"
