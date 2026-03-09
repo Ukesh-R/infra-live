@@ -6,6 +6,14 @@ terraform {
   }
 }
 
+resource "openstack_networking_port_v2" "vpn_port" {
+  network_id = var.network_id
+  security_group_ids = [var.security_group_id]
+
+  fixed_ip {
+    subnet_id = var.subnet_id
+  }
+}
 
 resource "openstack_compute_instance_v2" "vpn_gateway_vm" {
 
@@ -14,17 +22,22 @@ resource "openstack_compute_instance_v2" "vpn_gateway_vm" {
     flavor_name=var.vm_size
     key_pair = var.keypair_name
 
-    network {
-    uuid = var.network_id
-    }
+  network {
+    port = openstack_networking_port_v2.vpn_port.id
+  }
 }
 
-resource "openstack_networking_floatingip_v2" "vpn_fip" {
-  pool = "public1"
+resource "openstack_networking_floatingip_associate_v2" "vpn_fip_assoc" {
+
+  floating_ip = var.floating_ip
+  port_id = openstack_networking_port_v2.vpn_port.id
+
 }
 
+resource "openstack_networking_router_route_v2" "route_to_gcp" {
 
-resource "openstack_networking_floatingip_associate_v2" "fip_assoc" {
-  floating_ip = openstack_networking_floatingip_v2.vpn_fip.address
-  port_id     = openstack_compute_instance_v2.vpn_gateway_vm.network[0].port
+  router_id = var.router_id
+  destination_cidr = "192.168.10.0/24"
+  next_hop = openstack_networking_port_v2.vpn_port.all_fixed_ips[0]
+  
 }

@@ -15,11 +15,11 @@ resource "google_compute_network" "hybrid-vpc"{
 resource "google_compute_subnetwork" "hybrid-subnet"{
     name= var.subnet_name
     ip_cidr_range = var.subnet_cidr
-    region_name = var.region_name
+    region = var.region_name
     network = google_compute_network.hybrid-vpc.id
 }
 
 resource "google_compute_address" "vm-ip" {
   name   = "vm-external-ip"
-  region_name = var.region_name
+  region = var.region_name
 }

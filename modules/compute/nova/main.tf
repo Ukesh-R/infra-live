@@ -6,17 +6,25 @@ terraform {
   }
 }
 
+resource "openstack_networking_port_v2" "vm_port" {
+  network_id = var.network_id
+
+  security_group_ids = [var.security_group_id]
+
+  fixed_ip {
+    subnet_id = var.subnet_id
+  }
+}
+
 resource "openstack_compute_instance_v2" "vm"{
     name= var.vm_name
     image_name=var.image_name
     flavor_name=var.vm_size
     key_pair = var.keypair_name
-    security_groups = [var.security_group_name]
-
     
     network {
-    uuid = var.network_id
-  }  
+      port = openstack_networking_port_v2.vm_port.id
+    }  
 }
 
 resource "openstack_networking_floatingip_v2" "vm_fip" {
@@ -25,9 +33,5 @@ resource "openstack_networking_floatingip_v2" "vm_fip" {
 
 resource "openstack_networking_floatingip_associate_v2" "fip_assoc" {
   floating_ip = openstack_networking_floatingip_v2.vm_fip.address
-  port_id     = openstack_compute_instance_v2.vm.network[0].port
+  port_id     = openstack_networking_port_v2.vm_port.id
 }
-
-
-
-

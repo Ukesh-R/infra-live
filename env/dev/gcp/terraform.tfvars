@@ -18,9 +18,11 @@ source_ranges = ["0.0.0.0/0"]
 vm_name = "vm-1"
 vm_type = "e2-micro"
 image_name = "debian-cloud/debian-11"
-zone = "asia-south1-a"
+zone = "asia-south1-b"
 
 # VPN
 
 vpn_gateway_name = "gcp-vpn-gateway"
-openstack_subnet = "10.0.0.0/16"
+openstack_vpn_ip = "192.168.5.33"
+shared_secret = "supersecretkey"
+openstack_subnet = "10.0.0.0/24"

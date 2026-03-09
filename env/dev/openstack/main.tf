@@ -14,9 +14,11 @@ module "compute" {
   image_name          = var.image_name
   vm_size             = var.vm_size
   network_id          = module.network.network_id
+  subnet_id           = module.network.subnet_id
   floating_ip         = module.network.floating_ip_address
   keypair_name        = var.keypair_name
   security_group_name = module.security.security_group_name
+  security_group_id   = module.security.security_group_id
   port_id             = module.network.port_id
 }
 
@@ -53,4 +55,5 @@ module "vpn" {
   security_group_id = module.security.security_group_id
   network_id = module.network.network_id
   subnet_id = module.network.subnet_id
+  router_id = module.network.router_id
 }

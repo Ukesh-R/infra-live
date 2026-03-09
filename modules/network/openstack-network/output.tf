@@ -17,3 +17,6 @@ output "public_ip" {
 output "port_id" {
     value = openstack_networking_port_v2.tf_port_id.id
 }
+output "router_id" {
+  value       = openstack_networking_router_v2.router.id
+}

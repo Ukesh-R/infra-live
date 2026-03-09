@@ -64,3 +64,11 @@ variable "openstack_subnet" {
   type = string
 }
 
+variable "openstack_vpn_ip"{
+    type = string
+}
+
+variable "shared_secret" {
+    type = string
+}
+

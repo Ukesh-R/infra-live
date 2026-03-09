@@ -30,3 +30,6 @@ variable "subnet_id"{
     type = string
 }
 
+variable "router_id"{
+    type = string
+}
