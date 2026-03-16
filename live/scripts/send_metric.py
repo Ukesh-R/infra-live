@@ -7,36 +7,38 @@ project_id = "hybrid-network-architecture"
 client = monitoring_v3.MetricServiceClient()
 project_name = f"projects/{project_id}"
 
+racks = ["rack_1", "rack_2", "rack_3"]
+
 while True:
-    series = monitoring_v3.TimeSeries()
 
-    # Metric type
-    series.metric.type = "custom.googleapis.com/rack_temperature"
+    for rack in racks:
 
-    # Resource type
-    series.resource.type = "global"
+        series = monitoring_v3.TimeSeries()
 
-    # REQUIRED LABEL
-    series.resource.labels["project_id"] = project_id
+        series.metric.type = "custom.googleapis.com/rack_temperature"
 
-    # Create point
-    point = monitoring_v3.Point()
+        # LABEL FOR EACH RACK
+        series.metric.labels["rack_id"] = rack
 
-    point.value.double_value = random.uniform(28, 35)
+        series.resource.type = "global"
+        series.resource.labels["project_id"] = project_id
 
-    now = time.time()
+        point = monitoring_v3.Point()
+        point.value.double_value = random.uniform(28, 35)
 
-    point.interval = monitoring_v3.TimeInterval(
-        end_time={"seconds": int(now)}
-    )
+        now = time.time()
 
-    series.points.append(point)
+        point.interval = monitoring_v3.TimeInterval(
+            end_time={"seconds": int(now)}
+        )
 
-    client.create_time_series(
-        name=project_name,
-        time_series=[series],
-    )
+        series.points.append(point)
 
-    print("Temperature sent")
+        client.create_time_series(
+            name=project_name,
+            time_series=[series],
+        )
+
+        print(f"{rack} temperature sent")
 
     time.sleep(5)

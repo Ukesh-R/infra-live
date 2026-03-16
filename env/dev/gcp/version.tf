@@ -1,10 +1,10 @@
-terraform{
-    required_providers {
-        google = {
-            source = "hashicorp/google"
-            version = "~>4.0"
-        }
+terraform {
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~>4.0"
     }
+  }
 }
 
 provider "google" {

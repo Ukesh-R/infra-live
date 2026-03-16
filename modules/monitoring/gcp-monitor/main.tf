@@ -10,16 +10,21 @@ terraform{
 
 resource "google_monitoring_metric_descriptor" "rack_temperature" {
 
+  project = var.project_id
+
   type = "custom.googleapis.com/rack_temperature"
   display_name = "Rack Temperature"
   description = "Temperature readings from physical data center racks"
+
   metric_kind = "GAUGE"
-  value_type = "DOUBLE"
-  unit = "{degC}"
+  value_type  = "DOUBLE"
+  unit        = "{degC}"
 
 }
 
 resource "google_monitoring_dashboard" "dcim_dashboard" {
+  
+  project = var.project_id
 
   dashboard_json = <<EOF
 {
@@ -46,5 +51,4 @@ resource "google_monitoring_dashboard" "dcim_dashboard" {
   }
 }
 EOF
-
 }

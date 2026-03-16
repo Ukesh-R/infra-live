@@ -1,51 +1,51 @@
 # Network 
-variable "network_name"{
-    type = string
+variable "network_name" {
+  type = string
 }
 
-variable "auto_create_subnetworks"{
-    type = bool
+variable "auto_create_subnetworks" {
+  type = bool
 }
 
 variable "subnet_name" {
-    type = string
+  type = string
 }
 
-variable "subnet_cidr"{
-    type = string
+variable "subnet_cidr" {
+  type = string
 }
 
-variable "region_name"{
-    type = string
+variable "region_name" {
+  type = string
 }
 
 variable "external_ip_name" {
-    type = string
+  type = string
 }
 
 # Compute
 
 variable "vm_name" {
-    type = string
+  type = string
 }
 
 variable "zone" {
-    type = string
+  type = string
 }
 
-variable "vm_type"{
-    type = string
+variable "vm_type" {
+  type = string
 }
 
-variable "image_name"{
-    type = string
+variable "image_name" {
+  type = string
 }
 
 
 # security
 
 variable "security_name" {
-    type = string
+  type = string
 }
 
 variable "source_ranges" {
@@ -64,12 +64,12 @@ variable "openstack_subnet" {
   type = string
 }
 
-variable "openstack_vpn_ip"{
-    type = string
+variable "openstack_vpn_ip" {
+  type = string
 }
 
 variable "shared_secret" {
-    type = string
+  type = string
 }
 
 
