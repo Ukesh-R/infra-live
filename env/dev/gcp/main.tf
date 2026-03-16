@@ -28,17 +28,10 @@ module "compute" {
 
 }
 
+module "iam" {
 
-# module "vpn" {
-#   source = "../../../modules/vpn/gcp-vpn"
-#
-#   vpn_gateway_name = var.vpn_gateway_name
-#   network_id       = module.network.vpc_id
-#   region_name      = var.region_name
-#
-#   peer_ip          = var.openstack_vpn_ip
-#   shared_secret    = var.shared_secret
-#
-#   gcp_subnet       = var.subnet_cidr
-#   openstack_subnet = var.openstack_subnet
-# }
+  source = "../../../modules/iam/gcp-iam"
+  project_id = var.project_id
+
+}
+

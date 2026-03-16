@@ -72,3 +72,9 @@ variable "shared_secret" {
     type = string
 }
 
+
+# iam
+
+variable "project_id" {
+  type = string
+}

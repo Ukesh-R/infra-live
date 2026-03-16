@@ -26,3 +26,7 @@ vpn_gateway_name = "gcp-vpn-gateway"
 openstack_vpn_ip = "192.168.5.33"
 shared_secret = "supersecretkey"
 openstack_subnet = "10.0.0.0/24"
+
+# IAM
+
+project_id = "hybrid-network-architecture"
