@@ -1,35 +1,51 @@
 const express = require("express");
+const cors = require("cors");
 const { MetricServiceClient } = require("@google-cloud/monitoring");
 
 const app = express();
 const port = 3000;
 
-const client = new MetricServiceClient();
+app.use(cors());
+app.use(express.json());
 
+const client = new MetricServiceClient();
 const projectId = "hybrid-network-architecture";
 
 app.get("/temperature", async (req, res) => {
 
-  const request = {
-    name: client.projectPath(projectId),
-    filter: 'metric.type="custom.googleapis.com/rack_temperature"',
-    interval: {
-      startTime: {
-        seconds: Date.now() / 1000 - 600,
-      },
-      endTime: {
-        seconds: Date.now() / 1000,
-      },
-    },
-  };
+  try {
 
-  const [timeSeries] = await client.listTimeSeries(request);
+    const now = Math.floor(Date.now() / 1000);
 
-  const data = timeSeries.map(series => ({
-    value: series.points[0].value.doubleValue
-  }));
+    const request = {
+      name: client.projectPath(projectId),
+      filter: 'metric.type="custom.googleapis.com/rack_temperature"',
+      interval: {
+        startTime: {
+          seconds: now - 600
+        },
+        endTime: {
+          seconds: now
+        }
+      }
+    };
 
-  res.json(data);
+    const [timeSeries] = await client.listTimeSeries(request);
+
+    const data = timeSeries.map(series => ({
+      value: series.points[0].value.doubleValue
+    }));
+
+    console.log("Temperature sent to frontend:", data);
+
+    res.json(data);
+
+  } catch (error) {
+
+    console.error(error);
+    res.status(500).send("Error fetching metrics");
+
+  }
 
 });
 
