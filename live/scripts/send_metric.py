@@ -14,12 +14,9 @@ while True:
     for rack in racks:
 
         series = monitoring_v3.TimeSeries()
-
         series.metric.type = "custom.googleapis.com/rack_temperature"
-
-        # LABEL FOR EACH RACK
         series.metric.labels["rack_id"] = rack
-
+        
         series.resource.type = "global"
         series.resource.labels["project_id"] = project_id
 

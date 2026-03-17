@@ -48,9 +48,7 @@ function App() {
   useEffect(() => {
 
     fetchTemperature();
-
     const interval = setInterval(fetchTemperature, 5000);
-
     return () => clearInterval(interval);
 
   }, []);
@@ -69,50 +67,27 @@ function App() {
 
       <h1 className="title">DCIM Data Center Monitoring</h1>
 
-      {/* RACK STATUS CARDS */}
-
       <div className="rack-grid">
-
         {temperature.map((t, i) => {
-
           const status = getStatus(t.value);
-
           return (
-
             <div key={i} className={`rack-card ${status}`}>
-
               <h3>Rack {i + 1}</h3>
-
               <p className="temp">{t.value.toFixed(2)} °C</p>
-
               <p className="status">{status.toUpperCase()}</p>
-
             </div>
-
           );
-
         })}
-
       </div>
 
-      {/* TEMPERATURE TREND CHART */}
-
       <div className="chart-section">
-
         <h2>Temperature Trend</h2>
-
         <ResponsiveContainer width="100%" height={300}>
-
           <LineChart data={history}>
-
             <CartesianGrid strokeDasharray="3 3" />
-
             <XAxis dataKey="time" />
-
             <YAxis />
-
             <Tooltip />
-
             <Legend />
 
             <Line
@@ -138,17 +113,13 @@ function App() {
               strokeWidth={3}
               name="Rack 3"
             />
-
           </LineChart>
-
         </ResponsiveContainer>
 
       </div>
-
       <p className="updated">
         Last Updated: {lastUpdated}
       </p>
-
     </div>
 
   );
